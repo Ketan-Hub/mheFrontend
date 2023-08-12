@@ -1,0 +1,415 @@
+import React, {useState, useEffect, useContext} from 'react';
+import {
+  SafeAreaView,
+  Text,
+  View,
+  Image,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Dimensions,
+  FlatList,
+  AsyncStorage,
+} from 'react-native';
+import like from '../../../assets/like.png';
+import commentLogo from '../../../assets/comment2.png';
+import dislike from '../../../assets/dislike1.png';
+import {Context1} from '../../../../Stackpage';
+import axios from 'axios';
+import FontAwesome, {f142, SolidIcons} from 'react-native-fontawesome';
+import {CircularProgressBase} from 'react-native-circular-progress-indicator';
+import {useRoute} from '@react-navigation/native';
+let url = 'http://3.7.194.119:4000/api/post/getposts';
+import logo from '../../../assets/logo3.jpeg';
+import Loader from './Loader';
+// import VideoPlayer from 'react-native-video-player';
+const WIDTH = Dimensions.get('window').width;
+const HEIGHT = Dimensions.get('window').height;
+const Posts = ({navigation, category}) => {
+  const {user} = useContext(Context1);
+
+  console.log(user, 'inside of posts');
+  const [liked, setLiked] = useState(false);
+  const [posts, setPosts] = useState(null);
+  const [showOptions, setShowOption] = useState({current: false, id: null});
+  const [visible, setvisible] = useState(false);
+  useEffect(() => {
+    getPosts();
+    const willFocusSubscription = navigation.addListener('focus', () => {
+      getPosts();
+    });
+
+    return willFocusSubscription;
+  }, []);
+
+  const getPosts = () => {
+    console.log('category', category);
+    setvisible(true);
+    fetch(url, {
+      method: 'GET',
+    })
+      .then(res => res.json())
+      .then(response => {
+        console.log(response);
+        // console.log(41, response.data[0].image[0].img);
+        if (response.success == true) {
+          if (category !== 'Home' && category) {
+            setPosts(
+              response?.data?.filter(item => item.category === category),
+            );
+          } else {
+            console.log(posts);
+            setPosts(response?.data);
+            setvisible(false);
+          }
+        }
+      })
+      .catch(err => {
+        AsyncStorage.removeItem('token');
+        navigation.navigate('Login');
+        console.log(42, err);
+      });
+
+    // axios.get('http://localhost:4000/api/post/getposts/category').then(res=>console.log(res))
+  };
+
+  const deletePost = id => {
+    let url = `http://3.7.194.119:4000/api/post/delete/${id}`;
+    fetch(url, {
+      method: 'DELETE',
+    })
+      .then(res => res.json())
+      .then(response => {
+        getPosts();
+        setShowOption({
+          current: !showOptions.current,
+        });
+        console.log(response);
+      })
+      .catch(err => {
+        console.log(42, err);
+      });
+  };
+
+  const likePost = post => {
+    let url = `http://3.7.194.119:4000/api/post/likeunlike/${post?._id}`;
+    fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(res => res.json())
+      .then(response => {
+        getPosts();
+        console.log(response);
+      })
+      .catch(err => {
+        console.log(42, err);
+      });
+  };
+  console.log('posts', posts);
+  const route = useRoute();
+  const onchange = (nativeEvent) => {
+    if(nativeEvent){
+      const slide = Math.ceil(nativeEvent.contentOffset.x / nativeEvent.layoutMesurement.width);
+      if(slide != imgActive){
+        setImgActive(slide);
+      }
+    }
+  };
+
+  const [imgActive, setImgActive] = useState(0);
+  return (
+    <ScrollView>
+      {posts ? (
+        posts?.map((item, index) => {
+          return (
+            <View style={styles.card} key={index}>
+              <View style={styles.cardHeader}>
+                <View style={styles.headerLeft}>
+                  <Image style={styles.userImage} source={logo} />
+                  <Text style={styles.userName}>{item.title}</Text>
+                </View>
+                <View style={styles.headerRight}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      setShowOption({
+                        current: !showOptions.current,
+                        id: item._id,
+                      })
+                    }>
+                    <Image
+                      style={{
+                        height: 25,
+                        width: 25,
+                        marginRight: 10,
+                        marginTop: 10,
+                      }}
+                      source={{
+                        uri: 'http://icon-library.com/images/android-3-dot-menu-icon/android-3-dot-menu-icon-9.jpg',
+                      }}
+                    />
+                  </TouchableOpacity>
+
+                  {showOptions.current && item._id === showOptions.id && (
+                    <TouchableOpacity
+                      style={{
+                        position: 'absolute',
+                        right: 35,
+                        top: 3,
+                        zIndex: 100,
+                        backgroundColor: 'white',
+                        width: 110,
+                      }}
+                      onPress={() => deletePost(item?._id)}>
+                      <Text
+                        style={{
+                          fontSize: 17,
+                          borderWidth: 0.4,
+                          padding: 10,
+                          borderRadius: 10,
+                          color: 'black',
+                        }}>
+                        Delete Post
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+              {item.postType[0] === 'Video' ? (
+                <></>
+              ) : (
+                <>
+                  <ScrollView
+                    onScroll={({nativeEvent}) => onchange(nativeEvent)}
+                    showsHorizontalScrollIndicator={false}
+                    pagingEnabled
+                    horizontal
+                    style={styles.wrap}>
+                    {item?.image.map((pic, index) => {
+                      <Image
+                        key={index}
+                        resizeMode="stretch"
+                        style={styles.wrap}
+                        source={{
+                          uri: pic.img,
+                        }}
+                      />;
+                    })}
+                  </ScrollView>
+                  <View style={styles.wrapDot}>
+                    {item?.image.map((pic, index) => {
+                      <Text
+                        key={index}
+                        style={
+                          imgActive == index
+                            ? styles.dotActive
+                            : styles.dotInActive
+                        }>
+                        ●
+                      </Text>;
+                    })}
+                  </View>
+                </>
+              )}
+
+              <View style={styles.cardFooter}>
+                <View style={styles.footerLeft}>
+                  <View style={{flexDirection: 'row'}}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setLiked(!liked);
+                        likePost(item);
+                      }}>
+                      <Image
+                        style={{
+                          height: 30,
+                          width: 30,
+                          marginTop: 5,
+                          marginRight: 13,
+                        }}
+                        source={
+                          item?.likes.includes(user?._id?.toString())
+                            ? like
+                            : dislike
+                        }
+                      />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => {
+                        navigation.navigate('Comments', {
+                          itemId: item?._id,
+                          comments: item?.comments,
+                          post: item,
+                        });
+                      }}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'baseline',
+                      }}>
+                      <Image
+                        style={{
+                          height: 23,
+                          width: 23,
+                          marginTop: 7,
+                        }}
+                        source={commentLogo}
+                      />
+                      {/* <Text
+                      style={{
+                        color: 'black',
+                        alignSelf: 'center',
+                        fontSize: 20,
+                        marginTop: 7,
+                        marginLeft:10
+                      }}>
+                      {item?.comments.length || 0}
+                    </Text> */}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+              <View style={styles.footerLeft}>
+                <View style={{flexDirection: 'row'}}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      navigation.navigate('Likes', {
+                        itemId: item?._id,
+                        likes: item?.likes,
+                        navigateTo: route.name,
+                      });
+                    }}>
+                    {/* Liked by{' '} */}
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        color: 'black',
+                        marginLeft: 0,
+                        marginTop: 10,
+                      }}>
+                      {item?.likes?.length} Likes
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      navigation.navigate('Comments', {
+                        itemId: item?._id,
+                        comments: item?.comments,
+                        post: item,
+                      });
+                    }}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'baseline',
+                    }}>
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        marginLeft: 7,
+                        marginTop: 10,
+                      }}>
+                      {item?.comments?.length} Comments
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View style={styles.footerLeft}>
+                <View style={{flexDirection: 'row'}}>
+                  <Text style={{marginLeft: 0, marginTop: 7}}>
+                    Description{' '}
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        color: 'black',
+                      }}>
+                      {item?.description}
+                    </Text>
+                  </Text>
+                </View>
+              </View>
+            </View>
+          );
+        })
+      ) : (
+        <>
+          <View
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: 500,
+            }}>
+            <Text style={{fontSize: 25, fontWeight: '500', color: '#667CE1'}}>
+              Loading...
+            </Text>
+          </View>
+        </>
+      )}
+    </ScrollView>
+  );
+};
+
+export default Posts;
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#fff',
+    padding: 10,
+    marginLeft: 10,
+    marginRight: 10,
+    marginBottom: 10,
+    marginTop: 10,
+    borderRadius: 10,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+  },
+  userImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 50 / 2,
+  },
+  userName: {
+    fontWeight: 'bold',
+    marginTop: 12,
+    marginLeft: 10,
+    fontSize: 17,
+  },
+  feedImage: {
+    height: 300,
+    borderRadius: 10,
+    marginVertical: 10,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  footerLeft: {
+    flexDirection: 'row',
+  },
+  wrap: {
+    width: WIDTH,
+    height: HEIGHT * 0.25,
+  },
+  wrapDot: {
+    position: 'absolute',
+    bottom: 0,
+    flexDirection: 'row',
+    alignSelf: 'center',
+  },
+  dotActive: {
+    margin: 3,
+    color: 'black',
+  },
+  dotInActive: {
+    margin: 3,
+    color: 'white',
+  },
+});

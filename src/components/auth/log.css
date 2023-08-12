@@ -1,0 +1,72 @@
+.backBody{
+    padding: 7%;
+    border-radius: 10px;
+    overflow: hidden;
+   display: flex;
+   justify-content: center;
+  }
+  
+  .middleCard{
+    background-color: #fff;
+    border-radius: 10px;
+    height: 63vh;
+    width: 60%;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); 
+  }
+  .headingg{
+    font-size: 22px;
+    color: rgb(7, 7, 7);
+    border-bottom: 2px solid white;
+    padding: 10px;
+    font-family: "Josefin Sans";
+    font-weight: 700;
+  }
+  .right{
+    padding: 7%;
+    margin-top: -8px;
+    width: 66%;
+    padding-right: 11%;
+    height: 61vh;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); 
+    border-radius: 3px;
+    background: rgb(239,158,44);
+    background: linear-gradient(90deg, rgba(239,158,44,1) 61%, rgb(205, 142, 88) 98%);
+  }
+  .all-data{
+     padding: 2%;
+  }
+  .user{
+    border: none;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); 
+    border-bottom: 2px solid rgb(212, 211, 211) !important;
+  }
+  .text{
+    font-weight: 600;
+  }
+  .login_logoo{
+    height: 31%;
+  }
+  @media screen and (max-width: 600px) {
+    .login_logoo{
+        height: 170px;
+        width: 100px;
+    }
+    .left{
+        margin-bottom: 10px;
+        margin: 40px !important;
+        margin-left: 30%;
+      }
+      .middleCard{
+        height: 91.3vh !important;
+        margin: 0 0;
+        width: 100%;
+      }
+      .right{
+        width: 90%;
+        height: 63vh !important;
+        margin-left: 18px;
+      }
+      .headingg{
+        font-size: 12.3px;
+      }
+  }
